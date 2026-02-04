@@ -173,8 +173,9 @@ sudo apt-get install -y \
   unzip
 
 # Install Oh My Zsh (non-interactive, keep existing .zshrc)
+# Run from $HOME to avoid git context issues with the dotfiles repo
 log "Installing Oh My Zsh..."
-RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+(cd "$HOME" && RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)") || true
 
 # Install yq
 log "Installing yq..."
