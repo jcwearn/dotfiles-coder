@@ -105,6 +105,33 @@ EOF
 ensure_block_in_file "$HOME/.zshrc" "$ZSH_NVM_BLOCK_MARKER" "$ZSH_NVM_BLOCK_CONTENT"
 
 # ------------------------------------------------------------
+# 2b) Prefer zsh for interactive web-terminal sessions
+# Web terminal tends to start bash directly; this swaps into zsh.
+# Guarded so non-interactive shells/scripts are unaffected.
+# ------------------------------------------------------------
+PREFER_ZSH_MARKER="# >>> dotfiles-coder prefer zsh >>>"
+PREFER_ZSH_BLOCK=$(cat <<'EOF'
+# If this is an interactive bash shell, replace it with zsh (if available).
+case "$-" in
+  *i*) ;;
+  *) return ;;
+esac
+
+# Avoid loops if we're already in zsh.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  return
+fi
+
+# Only exec if zsh exists.
+if command -v zsh >/dev/null 2>&1; then
+  export SHELL="$(command -v zsh)"
+  exec zsh -l
+fi
+EOF
+)
+ensure_block_in_file "$HOME/.bashrc" "$PREFER_ZSH_MARKER" "$PREFER_ZSH_BLOCK"
+
+# ------------------------------------------------------------
 # 3) Install nvm + Node (LTS)
 # IMPORTANT: nvm isn't always compatible with `set -u`,
 # so temporarily disable nounset around sourcing/using nvm.
