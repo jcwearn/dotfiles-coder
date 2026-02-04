@@ -172,6 +172,10 @@ sudo apt-get install -y \
   wget \
   unzip
 
+# Install Oh My Zsh (non-interactive, keep existing .zshrc)
+log "Installing Oh My Zsh..."
+RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+
 # Install yq
 log "Installing yq..."
 sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
