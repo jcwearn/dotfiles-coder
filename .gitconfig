@@ -1,15 +1,15 @@
- [alias]                                                                                                                                              
-     co = checkout                                                                                                                                    
-     st = status                                                                                                                                      
-     br = branch                                                                                                                                      
-     ci = commit                                                                                                                                      
-     lg = log --oneline --graph --decorate                                                                                                            
- [user]                                                                                                                                               
-     name = Wearn, Jackson                                                                                                                            
-     email = jacksonwearn@gmail.com                                                                                                                   
- [github]                                                                                                                                             
-     user = jcwearn                                                                                                                                   
- [init]                                                                                                                                               
-     defaultBranch = main                                                                                                                             
- [pull]                                                                                                                                               
-     rebase = true
+[alias]
+    co = checkout
+    st = status
+    br = branch
+    ci = commit
+    lg = log --oneline --graph --decorate
+[user]
+    name = Wearn, Jackson
+    email = jacksonwearn@gmail.com
+[github]
+    user = jcwearn
+[init]
+    defaultBranch = main
+[pull]
+    rebase = true
