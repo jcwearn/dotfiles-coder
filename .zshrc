@@ -1,3 +1,9 @@
+# Oh My Zsh configuration
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git docker kubectl npm history)
+source $ZSH/oh-my-zsh.sh
+
 # History search with Ctrl+p/n
 bindkey '^P' history-beginning-search-backward
 bindkey '^N' history-beginning-search-forward
