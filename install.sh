@@ -67,7 +67,7 @@ link_dotfile ".gitconfig"
 link_dotfile ".zshrc"
 
 # ------------------------------------------------------------
-# 2) Ensure Node/npm/claude will be available in NEW shells
+# 2) Ensure shells load NVM so node/claude are on PATH in NEW shells
 # ------------------------------------------------------------
 export NVM_DIR="$HOME/.nvm"
 
@@ -105,18 +105,22 @@ EOF
 ensure_block_in_file "$HOME/.zshrc" "$ZSH_NVM_BLOCK_MARKER" "$ZSH_NVM_BLOCK_CONTENT"
 
 # ------------------------------------------------------------
-# 3) Install Node.js via nvm
+# 3) Install nvm + Node (LTS)
+# IMPORTANT: nvm isn't always compatible with `set -u`,
+# so temporarily disable nounset around sourcing/using nvm.
 # ------------------------------------------------------------
 log "Installing nvm..."
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
-# Load nvm into *this* script session
+# Temporarily disable nounset for nvm
+set +u
 # shellcheck disable=SC1090
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 log "Installing Node (LTS)..."
 nvm install --lts
 nvm use --lts
+set -u
 
 # ------------------------------------------------------------
 # 4) Install Claude Code CLI
