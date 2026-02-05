@@ -172,10 +172,20 @@ sudo apt-get install -y \
   wget \
   unzip
 
-# Install Oh My Zsh (non-interactive, keep existing .zshrc)
-# Run from $HOME and unset git env vars to avoid context issues with the dotfiles repo
+# Install Oh My Zsh (direct clone to avoid git context issues with the dotfiles repo)
 log "Installing Oh My Zsh..."
-(cd "$HOME" && unset GIT_DIR GIT_WORK_TREE && RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)") || true
+ZSH_DIR="$HOME/.oh-my-zsh"
+if [ -d "$ZSH_DIR" ]; then
+  log "Oh My Zsh already present at $ZSH_DIR; skipping clone"
+else
+  # Remove any partial state (e.g., a file instead of directory)
+  rm -rf "$ZSH_DIR"
+  # Strip any git env that Coder might inject in the dotfiles context
+  env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+      -u GIT_COMMON_DIR -u GIT_CONFIG_COUNT -u GIT_CONFIG_GLOBAL -u GIT_CONFIG_SYSTEM \
+      -u GIT_ASKPASS -u GIT_SSH_COMMAND \
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR"
+fi
 
 # Install yq
 log "Installing yq..."
