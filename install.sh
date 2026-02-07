@@ -170,7 +170,8 @@ sudo apt-get install -y \
   htop \
   tree \
   wget \
-  unzip
+  unzip \
+  nano
 
 # Install Oh My Zsh (direct clone to avoid git context issues with the dotfiles repo)
 log "Installing Oh My Zsh..."
