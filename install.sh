@@ -169,11 +169,26 @@ else
 fi
 
 # ------------------------------------------------------------
-# 4b) Claude Code user-level rules (persists on PVC via symlink)
+# 4b) Claude Code user-level rules from agent-config repo
 # ------------------------------------------------------------
-log "Setting up Claude Code user-level rules..."
-mkdir -p "$HOME/.claude/rules"
-link_dotfile ".claude/rules/git-workflow.md"
+AGENT_CONFIG_DIR="$HOME/.agent-config"
+log "Setting up Claude Code user-level rules from agent-config..."
+if [ -d "$AGENT_CONFIG_DIR/.git" ]; then
+  log "agent-config already cloned; pulling latest..."
+  git -C "$AGENT_CONFIG_DIR" pull --ff-only origin main || true
+else
+  log "Cloning agent-config..."
+  rm -rf "$AGENT_CONFIG_DIR"
+  git clone https://github.com/jcwearn/agent-config.git "$AGENT_CONFIG_DIR"
+fi
+mkdir -p "$HOME/.claude"
+if [ -L "$HOME/.claude/rules" ] && [ "$(readlink "$HOME/.claude/rules")" = "$AGENT_CONFIG_DIR/rules" ]; then
+  log "Rules symlink already correct"
+else
+  backup_if_needed "$HOME/.claude/rules"
+  ln -s "$AGENT_CONFIG_DIR/rules" "$HOME/.claude/rules"
+  log "Linked ~/.claude/rules -> $AGENT_CONFIG_DIR/rules"
+fi
 
 # ------------------------------------------------------------
 # 5) Install common dev CLI tools
