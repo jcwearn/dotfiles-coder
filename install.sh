@@ -95,7 +95,9 @@ EOF
 )
 ensure_block_in_file "$HOME/.bash_profile" "$BASH_PROFILE_MARKER" "$BASH_PROFILE_CONTENT"
 
-# Zsh shells (your repo .zshrc will be symlinked into $HOME)
+# Zsh shells - the NVM block is already in the repo .zshrc, but ensure it's
+# present in case an older symlink target was used. ensure_block_in_file is
+# idempotent (checks for the marker before appending).
 ZSH_NVM_BLOCK_MARKER="# >>> dotfiles-coder nvm >>>"
 ZSH_NVM_BLOCK_CONTENT=$(cat <<'EOF'
 export NVM_DIR="$HOME/.nvm"
@@ -133,47 +135,92 @@ ensure_block_in_file "$HOME/.bashrc" "$PREFER_ZSH_MARKER" "$PREFER_ZSH_BLOCK"
 
 # ------------------------------------------------------------
 # 3) Install nvm + Node (LTS)
-# IMPORTANT: nvm isn't always compatible with `set -u`,
-# so temporarily disable nounset around sourcing/using nvm.
+# These persist on the PVC — skip if already present.
 # ------------------------------------------------------------
-log "Installing nvm..."
-curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  log "nvm already installed; skipping"
+else
+  log "Installing nvm..."
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+fi
 
 # Temporarily disable nounset for nvm
 set +u
 # shellcheck disable=SC1090
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-log "Installing Node (LTS)..."
-nvm install --lts
-nvm use --lts
+if command -v node >/dev/null 2>&1; then
+  log "Node already installed: $(node --version); skipping"
+else
+  log "Installing Node (LTS)..."
+  nvm install --lts
+  nvm use --lts
+fi
 set -u
 
 # ------------------------------------------------------------
-# 4) Install Claude Code CLI
+# 4) Install Claude Code CLI (persists on PVC via nvm prefix)
 # ------------------------------------------------------------
-log "Installing Claude Code CLI..."
-npm install -g @anthropic-ai/claude-code
+if command -v claude >/dev/null 2>&1; then
+  log "Claude Code CLI already installed; skipping"
+else
+  log "Installing Claude Code CLI..."
+  npm install -g @anthropic-ai/claude-code
+fi
 
 # ------------------------------------------------------------
 # 5) Install common dev CLI tools
+# These install to the ephemeral container filesystem, so we use
+# a stamp file on the PVC to skip re-installation within the
+# same container lifecycle.
 # ------------------------------------------------------------
-log "Installing apt packages..."
-sudo apt-get update
-sudo apt-get install -y \
-  jq \
-  zsh \
-  ripgrep \
-  fd-find \
-  bat \
-  fzf \
-  htop \
-  tree \
-  wget \
-  unzip \
-  nano
+CONTAINER_ID=$(cat /proc/1/cgroup 2>/dev/null | head -1 | rev | cut -d/ -f1 | rev || hostname)
+STAMP_FILE="$HOME/.dotfiles-installed-${CONTAINER_ID}"
 
-# Install Oh My Zsh (direct clone to avoid git context issues with the dotfiles repo)
+if [ -f "$STAMP_FILE" ]; then
+  log "System packages already installed for this container; skipping"
+else
+  log "Installing apt packages..."
+  sudo apt-get update
+  sudo apt-get install -y --no-install-recommends \
+    jq \
+    zsh \
+    ripgrep \
+    fd-find \
+    bat \
+    fzf \
+    htop \
+    tree \
+    wget \
+    unzip \
+    nano
+
+  # Install yq
+  if ! command -v yq >/dev/null 2>&1; then
+    log "Installing yq..."
+    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+    sudo chmod +x /usr/local/bin/yq
+  else
+    log "yq already installed; skipping"
+  fi
+
+  # Install GitHub CLI (gh)
+  if ! command -v gh >/dev/null 2>&1; then
+    log "Installing GitHub CLI..."
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install -y gh
+  else
+    log "GitHub CLI already installed; skipping"
+  fi
+
+  # Mark this container as done
+  touch "$STAMP_FILE"
+fi
+
+# Install Oh My Zsh (persists on PVC)
 log "Installing Oh My Zsh..."
 ZSH_DIR="$HOME/.oh-my-zsh"
 if [ -d "$ZSH_DIR" ]; then
@@ -187,19 +234,6 @@ else
       -u GIT_ASKPASS -u GIT_SSH_COMMAND \
     git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR"
 fi
-
-# Install yq
-log "Installing yq..."
-sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-sudo chmod +x /usr/local/bin/yq
-
-# Install GitHub CLI (gh)
-log "Installing GitHub CLI..."
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y gh
 
 # ------------------------------------------------------------
 # 6) Set zsh as default shell (may fail in containers; ignore)
