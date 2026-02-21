@@ -169,6 +169,13 @@ else
 fi
 
 # ------------------------------------------------------------
+# 4b) Claude Code user-level rules (persists on PVC via symlink)
+# ------------------------------------------------------------
+log "Setting up Claude Code user-level rules..."
+mkdir -p "$HOME/.claude/rules"
+link_dotfile ".claude/rules/git-workflow.md"
+
+# ------------------------------------------------------------
 # 5) Install common dev CLI tools
 # These install to the ephemeral container filesystem. We check
 # whether key packages are present to skip re-installation on
