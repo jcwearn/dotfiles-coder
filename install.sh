@@ -170,15 +170,12 @@ fi
 
 # ------------------------------------------------------------
 # 5) Install common dev CLI tools
-# These install to the ephemeral container filesystem, so we use
-# a stamp file on the PVC to skip re-installation within the
-# same container lifecycle.
+# These install to the ephemeral container filesystem. We check
+# whether key packages are present to skip re-installation on
+# container restarts where the filesystem is intact.
 # ------------------------------------------------------------
-CONTAINER_ID=$(cat /proc/1/cgroup 2>/dev/null | head -1 | rev | cut -d/ -f1 | rev || hostname)
-STAMP_FILE="$HOME/.dotfiles-installed-${CONTAINER_ID}"
-
-if [ -f "$STAMP_FILE" ]; then
-  log "System packages already installed for this container; skipping"
+if command -v zsh >/dev/null 2>&1 && command -v gh >/dev/null 2>&1; then
+  log "System packages already installed; skipping"
 else
   log "Installing apt packages..."
   sudo apt-get update
@@ -216,8 +213,6 @@ else
     log "GitHub CLI already installed; skipping"
   fi
 
-  # Mark this container as done
-  touch "$STAMP_FILE"
 fi
 
 # Install Oh My Zsh (persists on PVC)
