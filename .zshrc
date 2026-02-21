@@ -27,3 +27,8 @@ alias ...='cd ../..'
 
 # Enable color support
 autoload -U colors && colors
+
+# >>> dotfiles-coder nvm >>>
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+# >>> dotfiles-coder nvm >>>
