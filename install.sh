@@ -169,10 +169,10 @@ else
 fi
 
 # ------------------------------------------------------------
-# 4b) Claude Code user-level rules from agent-config repo
+# 4b) Claude Code user-level config from agent-config repo (rules, settings, skills)
 # ------------------------------------------------------------
 AGENT_CONFIG_DIR="$HOME/.agent-config"
-log "Setting up Claude Code user-level rules from agent-config..."
+log "Setting up Claude Code user-level config from agent-config..."
 if [ -d "$AGENT_CONFIG_DIR/.git" ]; then
   log "agent-config already cloned; pulling latest..."
   git -C "$AGENT_CONFIG_DIR" pull --ff-only origin main || true
@@ -188,6 +188,20 @@ else
   backup_if_needed "$HOME/.claude/rules"
   ln -s "$AGENT_CONFIG_DIR/rules" "$HOME/.claude/rules"
   log "Linked ~/.claude/rules -> $AGENT_CONFIG_DIR/rules"
+fi
+if [ -L "$HOME/.claude/settings.json" ] && [ "$(readlink "$HOME/.claude/settings.json")" = "$AGENT_CONFIG_DIR/settings.json" ]; then
+  log "Settings symlink already correct"
+else
+  backup_if_needed "$HOME/.claude/settings.json"
+  ln -s "$AGENT_CONFIG_DIR/settings.json" "$HOME/.claude/settings.json"
+  log "Linked ~/.claude/settings.json -> $AGENT_CONFIG_DIR/settings.json"
+fi
+if [ -L "$HOME/.claude/skills" ] && [ "$(readlink "$HOME/.claude/skills")" = "$AGENT_CONFIG_DIR/skills" ]; then
+  log "Skills symlink already correct"
+else
+  backup_if_needed "$HOME/.claude/skills"
+  ln -s "$AGENT_CONFIG_DIR/skills" "$HOME/.claude/skills"
+  log "Linked ~/.claude/skills -> $AGENT_CONFIG_DIR/skills"
 fi
 
 # ------------------------------------------------------------
