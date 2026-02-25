@@ -27,6 +27,7 @@ alias la='ls -A'
 alias l='ls -CF'
 alias ..='cd ..'
 alias ...='cd ../..'
+alias k='kubectl'
 
 # Enable color support
 autoload -U colors && colors
